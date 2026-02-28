@@ -37,14 +37,14 @@ if len(songs) < 10:
 # =========================
 # 2) Train/Val/Test split by songs (IMPORTANT)
 # =========================
-random.shuffle(songs) #???
+random.shuffle(songs)
 
 n = len(songs)
 n_train = int(0.80 * n)
 n_val   = int(0.10 * n)
 train_songs = songs[:n_train]
 val_songs   = songs[n_train:n_train+n_val]
-test_songs  = songs[n_train+n_val:] #interesting syntaxis
+test_songs  = songs[n_train+n_val:]
 
 def tokenize_song_list(song_list):
     tokens = []
@@ -57,7 +57,7 @@ val_tokens   = tokenize_song_list(val_songs)
 test_tokens  = tokenize_song_list(test_songs)
 
 print("Train tokens:", len(train_tokens))
-print("Val tokens:", len(val_tokens))# Токенизовую пісню
+print("Val tokens:", len(val_tokens))
 # =========================
 # 3) Build vocab ONLY from train (avoid leakage)
 # =========================
@@ -70,7 +70,7 @@ UNK = "<UNK>"
 if PAD not in token_to_id:
     token_to_id[PAD] = len(token_to_id)
 if UNK not in token_to_id:
-    token_to_id[UNK] = len(token_to_id) #?
+    token_to_id[UNK] = len(token_to_id)
 
 id_to_token = {i: t for t, i in token_to_id.items()}
 VOCAB_SIZE = len(token_to_id)
@@ -97,7 +97,7 @@ def make_xy(ids: np.ndarray, seq_len: int):
     y = []
     for i in range(0, len(ids) - seq_len):
         X.append(ids[i:i+seq_len])
-        y.append(ids[i+seq_len]) #Interesting syntaxis
+        y.append(ids[i+seq_len])
     return np.array(X, dtype=np.int32), np.array(y, dtype=np.int32)
 
 X_train, y_train = make_xy(train_ids, SEQ_LEN)
@@ -124,13 +124,13 @@ model = tf.keras.Sequential([
     tf.keras.layers.Embedding(VOCAB_SIZE, EMB_DIM, input_length=SEQ_LEN),
     tf.keras.layers.LSTM(LSTM_UNITS),
     tf.keras.layers.Dense(VOCAB_SIZE, activation="softmax")
-]) #The most important function!!!
+]) #The most important function creates sequential model
 
 model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=LR),
     loss=tf.keras.losses.SparseCategoricalCrossentropy(),
     metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="acc")]
-) #Also important, need to check
+)
 
 model.summary()
 
@@ -138,7 +138,7 @@ model.summary()
 callbacks = [
     tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True),
     tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5)
-] #Interesting algorithm, was in MIT
+]
 
 # =========================
 # 6) Train
@@ -178,7 +178,6 @@ def generate(start_tokens, steps=64, temperature=0.9):
         nxt = sample_from_probs(probs, temperature=temperature)
         token = id_to_token[nxt]
 
-        # Пропускаємо структурний тег якщо попередній був таким же
         if token in SECTION_TOKENS and generated and generated[-1] == token:
             continue
 

@@ -13,7 +13,7 @@ model = keras.models.load_model("LSTM_model.keras")
 with open("vocab.json", "r", encoding="utf-8") as f:
     token_to_id = json.load(f)
 
-# PAD може бути відсутній у vocab.json — додаємо якщо нема
+# We add PAD if not in tokens vocab
 if "<PAD>" not in token_to_id:
     token_to_id["<PAD>"] = len(token_to_id)
 
@@ -34,7 +34,7 @@ def tokenize_input(text):
 # =====================
 # Generation
 # =====================
-MAX_CHORDS_PER_BAR = 4  # максимум акордів між двома <BAR>
+MAX_CHORDS_PER_BAR = 4  # max numner of chords between <BAR>
 
 def generate(seed_text, steps=40, temperature=0.9):
     seed_tokens = tokenize_input(seed_text)
@@ -49,7 +49,6 @@ def generate(seed_text, steps=40, temperature=0.9):
     generated_ids = seed_ids.copy()
     generated_tokens = [id_to_token[i] for i in seed_ids if i != PAD_ID]
 
-    # Рахуємо акорди в поточному такті з seed
     chords_in_bar = 0
     for t in reversed(generated_tokens):
         if t == "<BAR>":
@@ -66,12 +65,12 @@ def generate(seed_text, steps=40, temperature=0.9):
         probs[PAD_ID] = 0.0
         probs[UNK_ID] = 0.0
 
-        # Якщо досягли ліміту — форсуємо <BAR>
+        # If we exeed limit - add bar, because of maximum amount of chords between BARs
         if chords_in_bar >= MAX_CHORDS_PER_BAR:
             next_id = BAR_ID
             token = "<BAR>"
         else:
-            # Забороняємо останній акорд в такті якщо він не структурний
+            # Dont allow last token to be some random chord, has to end with structural tokens
             last_token = generated_tokens[-1] if generated_tokens else None
             if last_token and last_token not in STRUCTURAL and last_token != "<BAR>":
                 probs[token_to_id[last_token]] = 0.0
@@ -105,6 +104,5 @@ seed_text = "<SONG> <INTRO> Cm Gm <BAR>"
 
 generated_tokens = generate(seed_text, steps=50, temperature=1)
 
-# Виводимо без PAD токенів
 output = " ".join(t for t in generated_tokens if t != "<PAD>")
 print(output)

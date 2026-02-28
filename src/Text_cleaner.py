@@ -73,7 +73,7 @@ def mark_sections_from_bars(bars):
     """
     n = len(bars)
     if n < 8:
-        # too short to be smart; just INTRO + VERSE
+        # just INTRO + VERSE
         intro_len = min(2, n)
         return (
             [("<INTRO>", bars[:intro_len])] +
@@ -82,7 +82,6 @@ def mark_sections_from_bars(bars):
 
     rep = find_repeating_block(bars, min_len=4, max_len=8)
     if rep is None:
-        # no obvious chorus; just do intro 4 bars + verse rest
         intro_len = min(4, n)
         return [("<INTRO>", bars[:intro_len]), ("<VERSE>", bars[intro_len:])]
 
